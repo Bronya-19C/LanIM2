@@ -1,0 +1,35 @@
+plugins {
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+group = 'com.alpha.lanim'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+javafx {
+    version = '21'
+    modules = ['javafx.controls', 'javafx.web']
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.xerial:sqlite-jdbc:3.45.1.0'
+}
+
+application {
+    mainClass = 'com.alpha.lanim.Launcher'
+}
+
+tasks.register('runServer', JavaExec) {
+    mainClass = 'com.alpha.lanim.server.ImServer'
+    classpath = sourceSets.main.runtimeClasspath
+}
