@@ -14,47 +14,59 @@ public class FileMetaPayload {
 
     public FileMetaPayload(String fileId, String fileName, String contentType,
                            long totalSize, int totalChunks, String checksum) {
+        this.fileId = fileId;
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.totalSize = totalSize;
+        this.totalChunks = totalChunks;
+        this.checksum = checksum;
     }
 
     public String getFileId() {
-        return null;
+        return fileId;
     }
 
     public void setFileId(String fileId) {
+        this.fileId = fileId;
     }
 
     public String getFileName() {
-        return null;
+        return fileName;
     }
 
     public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public String getContentType() {
-        return null;
+        return contentType;
     }
 
     public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
     public long getTotalSize() {
-        return 0L;
+        return totalSize;
     }
 
     public void setTotalSize(long totalSize) {
+        this.totalSize = totalSize;
     }
 
     public int getTotalChunks() {
-        return 0;
+        return totalChunks;
     }
 
     public void setTotalChunks(int totalChunks) {
+        this.totalChunks = totalChunks;
     }
 
     public String getChecksum() {
-        return null;
+        return checksum;
     }
 
     public void setChecksum(String checksum) {
+        this.checksum = checksum;
     }
 }

@@ -10,26 +10,32 @@ public class JoinPayload {
     }
 
     public JoinPayload(String peerId, String nickname, String roomSecret) {
+        this.peerId = peerId;
+        this.nickname = nickname;
+        this.roomSecret = roomSecret;
     }
 
     public String getPeerId() {
-        return null;
+        return peerId;
     }
 
     public void setPeerId(String peerId) {
+        this.peerId = peerId;
     }
 
     public String getNickname() {
-        return null;
+        return nickname;
     }
 
     public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     public String getRoomSecret() {
-        return null;
+        return roomSecret;
     }
 
     public void setRoomSecret(String roomSecret) {
+        this.roomSecret = roomSecret;
     }
 }

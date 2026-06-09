@@ -13,34 +13,42 @@ public class JoinAckPayload {
     }
 
     public JoinAckPayload(String assignedId, String roomId, List<Envelope> history, List<MemberInfo> members) {
+        this.assignedId = assignedId;
+        this.roomId = roomId;
+        this.history = history;
+        this.members = members;
     }
 
     public String getAssignedId() {
-        return null;
+        return assignedId;
     }
 
     public void setAssignedId(String assignedId) {
+        this.assignedId = assignedId;
     }
 
     public String getRoomId() {
-        return null;
+        return roomId;
     }
 
     public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 
     public List<Envelope> getHistory() {
-        return null;
+        return history;
     }
 
     public void setHistory(List<Envelope> history) {
+        this.history = history;
     }
 
     public List<MemberInfo> getMembers() {
-        return null;
+        return members;
     }
 
     public void setMembers(List<MemberInfo> members) {
+        this.members = members;
     }
 
     public static class MemberInfo {
@@ -52,20 +60,24 @@ public class JoinAckPayload {
         }
 
         public MemberInfo(String peerId, String nickname) {
+            this.peerId = peerId;
+            this.nickname = nickname;
         }
 
         public String getPeerId() {
-            return null;
+            return peerId;
         }
 
         public void setPeerId(String peerId) {
+            this.peerId = peerId;
         }
 
         public String getNickname() {
-            return null;
+            return nickname;
         }
 
         public void setNickname(String nickname) {
+            this.nickname = nickname;
         }
     }
 }

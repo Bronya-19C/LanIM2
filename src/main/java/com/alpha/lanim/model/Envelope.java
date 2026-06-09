@@ -16,7 +16,7 @@ public class Envelope {
     public Envelope(String type, String messageId, String senderId, String roomId,
                     int sequence, long timestamp, Object payload) {
         this.type = type;
-        this.messageID = messageId;
+        this.messageId = messageId;
         this.senderId = senderId;
         this.roomId = roomId;
         this.sequence = sequence;
@@ -53,7 +53,7 @@ public class Envelope {
     }
 
     public void setRoomId(String roomId) {
-        this.roomId = roomId
+        this.roomId = roomId;
     }
 
     public int getSequence() {
@@ -61,7 +61,7 @@ public class Envelope {
     }
 
     public void setSequence(int sequence) {
-        this.sequence = sequence
+        this.sequence = sequence;
     }
 
     public long getTimestamp() {

@@ -19,75 +19,95 @@ public class FileRecord {
     public FileRecord(String fileId, String messageId, String fileName, String contentType,
                       long totalSize, int totalChunks, String checksum,
                       String localPath, int receivedChunks, String status) {
+        this.fileId = fileId;
+        this.messageId = messageId;
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.totalSize = totalSize;
+        this.totalChunks = totalChunks;
+        this.checksum = checksum;
+        this.localPath = localPath;
+        this.receivedChunks = receivedChunks;
+        this.status = status;
     }
 
     public String getFileId() {
-        return null;
+        return fileId;
     }
 
     public void setFileId(String fileId) {
+        this.fileId = fileId;
     }
 
     public String getMessageId() {
-        return null;
+        return messageId;
     }
 
     public void setMessageId(String messageId) {
+        this.messageId = messageId;
     }
 
     public String getFileName() {
-        return null;
+        return fileName;
     }
 
     public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public String getContentType() {
-        return null;
+        return contentType;
     }
 
     public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
     public long getTotalSize() {
-        return 0L;
+        return totalSize;
     }
 
     public void setTotalSize(long totalSize) {
+        this.totalSize = totalSize;
     }
 
     public int getTotalChunks() {
-        return 0;
+        return totalChunks;
     }
 
     public void setTotalChunks(int totalChunks) {
+        this.totalChunks = totalChunks;
     }
 
     public String getChecksum() {
-        return null;
+        return checksum;
     }
 
     public void setChecksum(String checksum) {
+        this.checksum = checksum;
     }
 
     public String getLocalPath() {
-        return null;
+        return localPath;
     }
 
     public void setLocalPath(String localPath) {
+        this.localPath = localPath;
     }
 
     public int getReceivedChunks() {
-        return 0;
+        return receivedChunks;
     }
 
     public void setReceivedChunks(int receivedChunks) {
+        this.receivedChunks = receivedChunks;
     }
 
     public String getStatus() {
-        return null;
+        return status;
     }
 
     public void setStatus(String status) {
+        this.status = status;
     }
 }

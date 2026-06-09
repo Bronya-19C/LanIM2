@@ -11,19 +11,23 @@ public class FileChunkAckPayload {
     }
 
     public FileChunkAckPayload(String fileId, List<Integer> missingChunks) {
+        this.fileId = fileId;
+        this.missingChunks = missingChunks;
     }
 
     public String getFileId() {
-        return null;
+        return fileId;
     }
 
     public void setFileId(String fileId) {
+        this.fileId = fileId;
     }
 
     public List<Integer> getMissingChunks() {
-        return null;
+        return missingChunks;
     }
 
     public void setMissingChunks(List<Integer> missingChunks) {
+        this.missingChunks = missingChunks;
     }
 }

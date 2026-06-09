@@ -9,19 +9,23 @@ public class UserEventPayload {
     }
 
     public UserEventPayload(String peerId, String nickname) {
+        this.peerId = peerId;
+        this.nickname = nickname;
     }
 
     public String getPeerId() {
-        return null;
+        return peerId;
     }
 
     public void setPeerId(String peerId) {
+        this.peerId = peerId;
     }
 
     public String getNickname() {
-        return null;
+        return nickname;
     }
 
     public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 }

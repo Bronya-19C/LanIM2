@@ -8,12 +8,14 @@ public class ChatPayload {
     }
 
     public ChatPayload(String text) {
+        this.text = text;
     }
 
     public String getText() {
-        return null;
+        return text;
     }
 
     public void setText(String text) {
+        this.text = text;
     }
 }
