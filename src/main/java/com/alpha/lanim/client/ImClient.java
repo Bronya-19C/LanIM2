@@ -105,7 +105,11 @@ public class ImClient {
             readThread.interrupt();
         }
         if (channel != null) {
-            channel.close();
+            try {
+                channel.close();
+            } catch (IOException ignored) {
+                // shutdown path: socket may already be closed
+            }
         }
     }
 }

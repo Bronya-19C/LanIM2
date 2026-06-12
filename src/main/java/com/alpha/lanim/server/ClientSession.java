@@ -154,6 +154,10 @@ public class ClientSession implements Runnable {
             );
             registry.broadcastExcept(roomId, this, leftEvent);
         }
-        channel.close();
+        try {
+            channel.close();
+        } catch (IOException ignored) {
+            // disconnect path: socket may already be closed
+        }
     }
 }

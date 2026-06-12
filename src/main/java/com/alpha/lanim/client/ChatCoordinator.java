@@ -46,6 +46,18 @@ public class ChatCoordinator implements ImClient.InboundListener {
         client.setListener(this);
     }
 
+    public MemberPane getMemberPane() {
+        return members;
+    }
+
+    public ChatPane getChatPane() {
+        return chat;
+    }
+
+    public PreviewPane getPreviewPane() {
+        return preview;
+    }
+
     public void onJoined(JoinAckPayload ack) {
         if (ack.getMembers() != null) {
             for (JoinAckPayload.MemberInfo mi : ack.getMembers()) {
