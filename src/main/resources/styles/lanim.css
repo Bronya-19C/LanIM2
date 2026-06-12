@@ -1,0 +1,242 @@
+/* ── LanIM theme tokens ── */
+.root {
+    -fx-font-family: "Segoe UI", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #eef1f6;
+}
+
+/* ── Login ── */
+.login-root {
+    -fx-background-color: linear-gradient(to bottom right, #e8eef8, #f4f6fb);
+}
+
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #dde3ed;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 36 40 32 40;
+    -fx-max-width: 380;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 16, 0, 0, 4);
+}
+
+.login-title {
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;
+}
+
+.login-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #64748b;
+}
+
+.login-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #475569;
+    -fx-font-weight: bold;
+}
+
+.login-field {
+    -fx-pref-width: 300;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1;
+    -fx-padding: 8 12;
+}
+
+.login-field:focused {
+    -fx-border-color: #2563eb;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.15), 6, 0, 0, 0);
+}
+
+.login-separator .line {
+    -fx-border-color: #e2e8f0;
+}
+
+.status-error {
+    -fx-text-fill: #dc2626;
+    -fx-font-size: 12px;
+}
+
+.status-info {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 12px;
+}
+
+/* ── Buttons ── */
+.button {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.button.primary {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.button.primary:hover {
+    -fx-background-color: #1d4ed8;
+}
+
+.button.primary:disabled {
+    -fx-background-color: #93c5fd;
+    -fx-opacity: 1.0;
+}
+
+.button.secondary {
+    -fx-background-color: white;
+    -fx-text-fill: #334155;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1;
+}
+
+.button.secondary:hover {
+    -fx-background-color: #f8fafc;
+}
+
+/* ── Main layout ── */
+.main-layout {
+    -fx-background-color: #eef1f6;
+}
+
+.sidebar {
+    -fx-background-color: white;
+    -fx-padding: 12;
+    -fx-spacing: 8;
+    -fx-min-width: 220;
+    -fx-pref-width: 240;
+}
+
+.sidebar-right {
+    -fx-border-color: transparent transparent transparent #e2e8f0;
+    -fx-border-width: 0 0 0 1;
+}
+
+.sidebar-left {
+    -fx-border-color: transparent #e2e8f0 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.pane-header {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #334155;
+    -fx-padding: 4 0 8 0;
+}
+
+/* ── Member list ── */
+.member-list {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+}
+
+.member-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 8 10;
+    -fx-text-fill: #334155;
+    -fx-font-size: 13px;
+}
+
+.member-list .list-cell:filled:hover {
+    -fx-background-color: #f1f5f9;
+    -fx-background-radius: 6;
+}
+
+.member-list .list-cell:filled:selected {
+    -fx-background-color: #dbeafe;
+    -fx-background-radius: 6;
+    -fx-text-fill: #1e40af;
+}
+
+/* ── Chat pane ── */
+.chat-pane {
+    -fx-background-color: #f8fafc;
+}
+
+.chat-scroll {
+    -fx-background-color: transparent;
+    -fx-background: #f8fafc;
+    -fx-border-color: transparent;
+}
+
+.chat-scroll > .viewport {
+    -fx-background-color: #f8fafc;
+}
+
+.chat-messages {
+    -fx-padding: 16;
+    -fx-spacing: 8;
+}
+
+.chat-input-bar {
+    -fx-background-color: white;
+    -fx-padding: 12 16;
+    -fx-spacing: 10;
+    -fx-border-color: #e2e8f0 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.chat-field {
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1;
+    -fx-padding: 8 14;
+}
+
+.chat-field:focused {
+    -fx-border-color: #2563eb;
+}
+
+.message-text {
+    -fx-font-size: 13px;
+    -fx-padding: 6 0;
+    -fx-text-fill: #334155;
+}
+
+.message-self {
+    -fx-font-size: 13px;
+    -fx-padding: 6 0;
+    -fx-text-fill: #1e293b;
+}
+
+.message-file {
+    -fx-font-size: 13px;
+    -fx-text-fill: #2563eb;
+    -fx-font-style: italic;
+    -fx-padding: 4 0;
+}
+
+.message-file-self {
+    -fx-font-size: 13px;
+    -fx-text-fill: #16a34a;
+    -fx-font-style: italic;
+    -fx-padding: 4 0;
+}
+
+/* ── Preview pane ── */
+.preview-area {
+    -fx-background-color: #f1f5f9;
+    -fx-background-radius: 8;
+    -fx-min-width: 280;
+    -fx-pref-width: 320;
+}
+
+.preview-placeholder {
+    -fx-text-fill: #94a3b8;
+    -fx-font-size: 13px;
+}
+
+.preview-hint {
+    -fx-text-fill: #94a3b8;
+    -fx-font-size: 13px;
+    -fx-padding: 10;
+    -fx-alignment: center;
+}

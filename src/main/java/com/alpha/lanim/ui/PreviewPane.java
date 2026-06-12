@@ -1,6 +1,5 @@
 package com.alpha.lanim.ui;
 
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -21,20 +20,19 @@ public class PreviewPane {
 
     public PreviewPane() {
         titleLabel = new Label("File Preview");
-        titleLabel.setStyle("-fx-font-weight: bold; -fx-padding: 5 0 5 0;");
+        titleLabel.getStyleClass().add("pane-header");
 
         placeholderLabel = new Label("No preview");
-        placeholderLabel.setStyle("-fx-text-fill: #888;");
+        placeholderLabel.getStyleClass().add("preview-placeholder");
 
         previewArea = new StackPane(placeholderLabel);
-        previewArea.setMinWidth(280);
-        previewArea.setPrefWidth(320);
+        previewArea.getStyleClass().add("preview-area");
         previewArea.setAlignment(Pos.CENTER);
-        previewArea.setStyle("-fx-background-color: #f5f5f5;");
 
-        root = new VBox(5);
-        root.setPadding(new Insets(10));
+        root = new VBox(8);
+        root.getStyleClass().addAll("sidebar", "sidebar-right");
         root.getChildren().addAll(titleLabel, previewArea);
+        VBox.setVgrow(previewArea, javafx.scene.layout.Priority.ALWAYS);
     }
 
     public Node getNode() {
@@ -110,7 +108,7 @@ public class PreviewPane {
     private static Label unsupportedLabel(String text) {
         Label label = new Label(text);
         label.setWrapText(true);
-        label.setStyle("-fx-text-fill: #888; -fx-padding: 10;");
+        label.getStyleClass().add("preview-hint");
         return label;
     }
 }

@@ -3,7 +3,6 @@ package com.alpha.lanim.ui;
 import com.alpha.lanim.client.ChatCoordinator;
 import com.alpha.lanim.model.JoinAckPayload;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.BorderPane;
@@ -44,8 +43,7 @@ public class ChatView {
         });
 
         BorderPane root = new BorderPane();
-        BorderPane.setMargin(members.getNode(), new Insets(0));
-        BorderPane.setMargin(preview.getNode(), new Insets(0));
+        root.getStyleClass().add("main-layout");
         root.setLeft(members.getNode());
         root.setCenter(chat.getNode());
         root.setRight(preview.getNode());
@@ -58,6 +56,8 @@ public class ChatView {
         stage.setMinWidth(1000);
         stage.setMinHeight(600);
 
-        return new Scene(root, 1050, 650);
+        Scene scene = new Scene(root, 1050, 650);
+        Styles.apply(scene);
+        return scene;
     }
 }

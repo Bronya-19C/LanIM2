@@ -32,27 +32,31 @@ public class ChatPane {
     private Runnable onFileAction;
 
     public ChatPane() {
-        messageContainer = new VBox(6);
-        messageContainer.setPadding(new Insets(10));
+        messageContainer = new VBox(8);
+        messageContainer.getStyleClass().add("chat-messages");
 
         scrollPane = new ScrollPane(messageContainer);
+        scrollPane.getStyleClass().add("chat-scroll");
         scrollPane.setFitToWidth(true);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
         messageField = new TextField();
+        messageField.getStyleClass().add("chat-field");
         messageField.setPromptText("Type a message...");
 
         Button sendButton = new Button("Send");
+        sendButton.getStyleClass().addAll("button", "primary");
         sendButton.setPrefWidth(80);
 
         Button fileButton = new Button("File");
+        fileButton.getStyleClass().addAll("button", "secondary");
         fileButton.setPrefWidth(60);
         fileButton.setTooltip(new Tooltip("Send a file"));
 
         HBox inputBox = new HBox(10);
-        inputBox.setPadding(new Insets(10));
+        inputBox.getStyleClass().add("chat-input-bar");
         inputBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(messageField, Priority.ALWAYS);
         inputBox.getChildren().addAll(messageField, sendButton, fileButton);
@@ -71,6 +75,7 @@ public class ChatPane {
         });
 
         root = new VBox();
+        root.getStyleClass().add("chat-pane");
         root.getChildren().addAll(scrollPane, inputBox);
     }
 
@@ -107,7 +112,7 @@ public class ChatPane {
     public void appendLocalText(String text, String nickname) {
         Label label = new Label(nickname + " (You): " + text);
         label.setWrapText(true);
-        label.setStyle("-fx-font-size: 13px; -fx-padding: 3 0; -fx-text-fill: #1a1a1a;");
+        label.getStyleClass().add("message-self");
         messageContainer.getChildren().add(label);
         scrollToBottom();
     }
@@ -116,11 +121,7 @@ public class ChatPane {
         String who = "You".equals(senderLabel) ? "You" : senderLabel;
         Label label = new Label(who + " sent file: " + fileName + " (" + (sizeBytes / 1024) + " KB)");
         label.setWrapText(true);
-        if ("You".equals(senderLabel)) {
-            label.setStyle("-fx-text-fill: green; -fx-font-style: italic;");
-        } else {
-            label.setStyle("-fx-text-fill: #0066cc; -fx-font-style: italic;");
-        }
+        label.getStyleClass().add("You".equals(senderLabel) ? "message-file-self" : "message-file");
         messageContainer.getChildren().add(label);
         scrollToBottom();
     }
@@ -153,7 +154,7 @@ public class ChatPane {
                 }
                 Label label = new Label(senderLabel + ": " + payload.getText());
                 label.setWrapText(true);
-                label.setStyle("-fx-font-size: 13px; -fx-padding: 3 0; -fx-text-fill: #333;");
+                label.getStyleClass().add("message-text");
                 messageContainer.getChildren().add(label);
             }
             case "FILE_META" -> {
@@ -164,7 +165,7 @@ public class ChatPane {
                 Label label = new Label(senderLabel + " sent file: " + meta.getFileName()
                         + " (" + (meta.getTotalSize() / 1024) + " KB)");
                 label.setWrapText(true);
-                label.setStyle("-fx-text-fill: #0066cc; -fx-font-style: italic;");
+                label.getStyleClass().add("message-file");
                 messageContainer.getChildren().add(label);
             }
             default -> {

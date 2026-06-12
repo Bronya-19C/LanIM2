@@ -1,7 +1,6 @@
 package com.alpha.lanim.ui;
 
 import com.alpha.lanim.model.MemberRow;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -21,12 +20,15 @@ public class MemberPane {
 
     public MemberPane() {
         headerLabel = new Label("Members (0)");
-        headerLabel.setStyle("-fx-font-weight: bold; -fx-padding: 5 0 5 0;");
+        headerLabel.getStyleClass().add("pane-header");
+
         listView = new ListView<>();
-        listView.setPrefWidth(220);
-        root = new VBox(5);
-        root.setPadding(new Insets(10));
+        listView.getStyleClass().add("member-list");
+
+        root = new VBox(8);
+        root.getStyleClass().addAll("sidebar", "sidebar-left");
         root.getChildren().addAll(headerLabel, listView);
+        VBox.setVgrow(listView, javafx.scene.layout.Priority.ALWAYS);
     }
 
     public Node getNode() {
