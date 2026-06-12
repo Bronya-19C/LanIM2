@@ -74,8 +74,11 @@ public class TlsContext {
             // 没有任何证书时，使用一个信任所有证书的 TrustManager（仅用于开发测试！）
             trustManagers = new TrustManager[] {
                     new X509TrustManager() {
+                        @Override
                         public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
+                        @Override
                         public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {}
+                        @Override
                         public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {}
                     }
             };
