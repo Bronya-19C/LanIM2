@@ -7,8 +7,9 @@ group = 'com.alpha.lanim'
 version = '1.0.0'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 repositories {
@@ -16,7 +17,7 @@ repositories {
 }
 
 javafx {
-    version = '21'
+    version = '25'
     modules = ['javafx.controls', 'javafx.web']
 }
 
