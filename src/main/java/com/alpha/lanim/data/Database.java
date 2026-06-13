@@ -45,6 +45,14 @@ public final class Database {
         }
     }
 
+    static {
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Failed to load SQLite JDBC driver", e);
+        }
+    }
+
     public static Connection connect() throws SQLException {
         String url = "jdbc:sqlite:data/lanim.db";
         return DriverManager.getConnection(url);

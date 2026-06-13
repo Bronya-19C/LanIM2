@@ -1,6 +1,7 @@
 package com.alpha.lanim.data;
 
 import com.alpha.lanim.model.Envelope;
+import com.alpha.lanim.util.JsonUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -9,7 +10,6 @@ import java.util.List;
 public class MessageRepo {
 
     public MessageRepo() {
-        // 无需初始化连接
     }
 
     public void insert(Envelope e) throws SQLException {
@@ -22,7 +22,7 @@ public class MessageRepo {
             stmt.setString(4, e.getRoomId());
             stmt.setInt(5, e.getSequence());
             stmt.setLong(6, e.getTimestamp());
-            stmt.setObject(7, e.getPayload());
+            stmt.setString(7, JsonUtil.toJson(e.getPayload()));
             stmt.executeUpdate();
         }
     }
@@ -52,7 +52,8 @@ public class MessageRepo {
                     e.setRoomId(rs.getString("room_id"));
                     e.setSequence(rs.getInt("sequence"));
                     e.setTimestamp(rs.getLong("timestamp"));
-                    e.setPayload(rs.getObject("payload"));
+                    String payloadText = rs.getString("payload");
+                    e.setPayload(payloadText != null ? JsonUtil.gson().fromJson(payloadText, Object.class) : null);
                     result.add(e);
                 }
             }

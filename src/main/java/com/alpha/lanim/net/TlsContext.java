@@ -3,10 +3,15 @@ package com.alpha.lanim.net;
 import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.security.KeyStore;
-import java.security.SecureRandom;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.*;
 
 public class TlsContext {
+
+    private static final String DEFAULT_KEYSTORE_PATH = "config/keystore.jks";
+    private static final String DEFAULT_KEYSTORE_PASSWORD = "lanim123";
 
     private SSLContext sslContext;
     private final String keyStorePath;
@@ -14,14 +19,6 @@ public class TlsContext {
     private final String trustStorePath;
     private final String trustStorePassword;
 
-    /**
-     * 默认构造器，尝试从系统属性或默认路径加载证书。
-     * 系统属性:
-     * - javax.net.ssl.keyStore
-     * - javax.net.ssl.keyStorePassword
-     * - javax.net.ssl.trustStore
-     * - javax.net.ssl.trustStorePassword
-     */
     public TlsContext() {
         this(
                 System.getProperty("javax.net.ssl.keyStore"),
@@ -31,13 +28,6 @@ public class TlsContext {
         );
     }
 
-    /**
-     * 使用显式路径和密码构建。
-     * @param keyStorePath     密钥库路径（可为null，表示不使用客户端认证）
-     * @param keyStorePassword 密钥库密码
-     * @param trustStorePath   信任库路径（可为null，使用默认信任链）
-     * @param trustStorePassword 信任库密码
-     */
     public TlsContext(String keyStorePath, String keyStorePassword,
                       String trustStorePath, String trustStorePassword) {
         this.keyStorePath = keyStorePath;
@@ -46,20 +36,8 @@ public class TlsContext {
         this.trustStorePassword = trustStorePassword;
     }
 
-    /**
-     * 初始化 SSLContext，需在使用前调用。
-     */
     public void init() throws Exception {
-        KeyManager[] keyManagers = null;
-        if (keyStorePath != null && !keyStorePath.isEmpty()) {
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            try (InputStream ksIs = new FileInputStream(keyStorePath)) {
-                keyStore.load(ksIs, keyStorePassword.toCharArray());
-            }
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(keyStore, keyStorePassword.toCharArray());
-            keyManagers = kmf.getKeyManagers();
-        }
+        KeyManager[] keyManagers = loadKeyManagers();
 
         TrustManager[] trustManagers = null;
         if (trustStorePath != null && !trustStorePath.isEmpty()) {
@@ -70,8 +48,7 @@ public class TlsContext {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmf.init(trustStore);
             trustManagers = tmf.getTrustManagers();
-        } else if (keyStorePath == null && trustStorePath == null) {
-            // 没有任何证书时，使用一个信任所有证书的 TrustManager（仅用于开发测试！）
+        } else {
             trustManagers = new TrustManager[] {
                     new X509TrustManager() {
                         @Override
@@ -89,16 +66,60 @@ public class TlsContext {
         sslContext.init(keyManagers, trustManagers, new SecureRandom());
     }
 
-    /**
-     * 返回服务端使用的 SSLContext（与客户端共用同一个，除非你希望分开）。
-     */
+    private KeyManager[] loadKeyManagers() throws Exception {
+        String path = keyStorePath;
+        String password = keyStorePassword;
+
+        if (path == null || path.isEmpty()) {
+            path = DEFAULT_KEYSTORE_PATH;
+            password = DEFAULT_KEYSTORE_PASSWORD;
+        }
+
+        Path p = Paths.get(path);
+        if (Files.notExists(p)) {
+            Path parent = p.getParent();
+            if (parent != null && Files.notExists(parent)) {
+                Files.createDirectories(parent);
+            }
+            generateKeystore(p, password != null ? password : DEFAULT_KEYSTORE_PASSWORD);
+            System.err.println("Generated new keystore: " + path);
+        }
+
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        try (InputStream ksIs = new FileInputStream(path)) {
+            keyStore.load(ksIs, (password != null ? password : "").toCharArray());
+        }
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(keyStore, (password != null ? password : "").toCharArray());
+        return kmf.getKeyManagers();
+    }
+
+    private void generateKeystore(Path path, String password) throws Exception {
+        String[] cmd = {
+                "keytool", "-genkeypair",
+                "-alias", "lanim",
+                "-keyalg", "RSA",
+                "-keysize", "2048",
+                "-sigalg", "SHA256withRSA",
+                "-dname", "CN=LanIM Server",
+                "-validity", "365",
+                "-keystore", path.toAbsolutePath().toString(),
+                "-storepass", password,
+                "-keypass", password
+        };
+        Process proc = Runtime.getRuntime().exec(cmd);
+        proc.getOutputStream().close();
+        int exit = proc.waitFor();
+        if (exit != 0) {
+            byte[] err = proc.getErrorStream().readAllBytes();
+            throw new RuntimeException("keytool failed: " + new String(err));
+        }
+    }
+
     public SSLContext serverContext() {
         return sslContext;
     }
 
-    /**
-     * 返回客户端使用的 SSLContext（与服务器共用）。
-     */
     public SSLContext clientContext() {
         return sslContext;
     }
