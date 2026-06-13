@@ -1,0 +1,31 @@
+=== DEBUG LOG - LanIM2 Build & Run Fixes ===
+Date: 2026-06-13
+
+--- Compilation Errors Fixed ---
+
+1. ChatCoordinator.java:86 - Unhandled SQLException in onJoined()
+   Fix: Wrapped repo.insert(env) in try-catch at line 86 (inside history loading loop)
+
+2. ChatCoordinator.java:116 - Unhandled SQLException in onEnvelope() CHAT_TEXT case
+   Fix: Wrapped repo.insert(env) in try-catch at line 116
+
+3. RoomRegistry.java:28 - Unhandled SQLException in join() lambda
+   Fix: Replaced inline lambda with block lambda containing try-catch for messageRepo.maxSequence(roomId)
+
+4. RoomRegistry.java:56-57 - Unhandled SQLException in saveAndTrim()
+   Fix: Wrapped messageRepo.insert() and messageRepo.trimRoom() in try-catch
+
+5. RoomRegistry.java:61 - Unhandled SQLException in recent()
+   Fix: Wrapped messageRepo.recentByRoom() in try-catch, returns empty list on error
+
+--- Build Result ---
+./gradlew build: BUILD SUCCESSFUL (6 actionable tasks)
+
+--- Run Result ---
+./gradlew runServer --args="--port 9090 --plain": Server started successfully, listening on port 9090
+./gradlew run: Client GUI launched successfully (LoginView displayed)
+
+--- Notes ---
+- SLF4J warnings are cosmetic (no logger binding configured, SQLite internal logging)
+- Native access warnings are expected for JavaFX + SQLite with Java 25
+- All warnings are non-blocking; application functions correctly

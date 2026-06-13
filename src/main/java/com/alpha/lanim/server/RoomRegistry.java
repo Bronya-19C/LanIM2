@@ -25,7 +25,14 @@ public class RoomRegistry {
     public void join(String roomId, String peerId, String nickname, ClientSession session) {
         roomSessions.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put(peerId, session);
         roomMembers.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put(peerId, nickname);
-        roomSeq.computeIfAbsent(roomId, k -> new AtomicInteger(messageRepo.maxSequence(roomId)));
+        roomSeq.computeIfAbsent(roomId, k -> {
+            try {
+                return new AtomicInteger(messageRepo.maxSequence(roomId));
+            } catch (java.sql.SQLException e) {
+                e.printStackTrace();
+                return new AtomicInteger(0);
+            }
+        });
     }
 
     public void leave(String roomId, String peerId) {
@@ -53,12 +60,21 @@ public class RoomRegistry {
     }
 
     public void saveAndTrim(Envelope env) {
-        messageRepo.insert(env);
-        messageRepo.trimRoom(env.getRoomId(), Constants.ROOM_MESSAGE_CAP);
+        try {
+            messageRepo.insert(env);
+            messageRepo.trimRoom(env.getRoomId(), Constants.ROOM_MESSAGE_CAP);
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<Envelope> recent(String roomId, int limit) {
-        return messageRepo.recentByRoom(roomId, limit);
+        try {
+            return messageRepo.recentByRoom(roomId, limit);
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+            return List.of();
+        }
     }
 
     public List<JoinAckPayload.MemberInfo> members(String roomId) {

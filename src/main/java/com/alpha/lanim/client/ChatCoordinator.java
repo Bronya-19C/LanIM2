@@ -83,7 +83,11 @@ public class ChatCoordinator implements ImClient.InboundListener {
 
         if (ack.getHistory() != null) {
             for (Envelope env : ack.getHistory()) {
-                repo.insert(env);
+                try {
+                    repo.insert(env);
+                } catch (java.sql.SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -113,7 +117,11 @@ public class ChatCoordinator implements ImClient.InboundListener {
                 break;
             }
             case "CHAT_TEXT": {
-                repo.insert(env);
+                try {
+                    repo.insert(env);
+                } catch (java.sql.SQLException e) {
+                    e.printStackTrace();
+                }
                 if (!localPeerId.equals(env.getSenderId())) {
                     String senderLabel = peerNicknames.getOrDefault(env.getSenderId(), env.getSenderId());
                     Platform.runLater(() -> chat.append(env, senderLabel));
