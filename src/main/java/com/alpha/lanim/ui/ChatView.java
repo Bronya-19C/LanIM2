@@ -11,6 +11,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class ChatView {
 
@@ -32,9 +33,14 @@ public class ChatView {
             }
             new Thread(() -> {
                 try {
-                    coordinator.sendFile(file.toPath());
-                    Platform.runLater(() ->
-                            chat.appendFileNotice("You", file.getName(), file.length()));
+                    Path path = file.toPath();
+                    coordinator.sendFile(path);
+                    Platform.runLater(() -> {
+                        chat.appendFileNotice("You", file.getName(), file.length());
+                        preview.showFile(path,
+                                PreviewPane.resolveContentType(null, file.getName()),
+                                file.getName());
+                    });
                 } catch (IOException ex) {
                     Platform.runLater(() ->
                             new Alert(Alert.AlertType.ERROR, "Failed to send file: " + ex.getMessage()).show());

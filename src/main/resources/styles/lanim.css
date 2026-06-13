@@ -229,6 +229,12 @@
     -fx-pref-width: 320;
 }
 
+.preview-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
 .preview-placeholder {
     -fx-text-fill: #94a3b8;
     -fx-font-size: 13px;
@@ -238,5 +244,67 @@
     -fx-text-fill: #94a3b8;
     -fx-font-size: 13px;
     -fx-padding: 10;
+    -fx-alignment: center;
+}
+
+.preview-unsupported-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 28 22;
+    -fx-alignment: center;
+    -fx-spacing: 10;
+}
+
+.preview-file-badge {
+    -fx-background-color: #eef2ff;
+    -fx-text-fill: #4338ca;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 10 18;
+    -fx-background-radius: 8;
+    -fx-alignment: center;
+}
+
+.preview-file-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;
+    -fx-text-alignment: center;
+    -fx-wrap-text: true;
+}
+
+.preview-file-meta {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 12px;
+}
+
+.preview-unsupported-hint {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 12px;
+    -fx-text-alignment: center;
+    -fx-wrap-text: true;
+}
+
+.preview-pdf-toolbar {
+    -fx-padding: 10 12;
+    -fx-spacing: 8;
+    -fx-alignment: center;
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.preview-pdf-btn {
+    -fx-min-width: 72;
+    -fx-padding: 6 10;
+}
+
+.preview-page-label {
+    -fx-text-fill: #475569;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
     -fx-alignment: center;
 }

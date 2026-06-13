@@ -18,12 +18,13 @@ repositories {
 
 javafx {
     version = '25'
-    modules = ['javafx.controls', 'javafx.web']
+    modules = ['javafx.controls', 'javafx.swing']
 }
 
 dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.xerial:sqlite-jdbc:3.45.1.0'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.2'
 }
 
 application {

@@ -57,9 +57,10 @@ public class FileTransfer {
     public void send(Path file, String peerId, String roomId) throws IOException {
         String checksum = HashUtil.sha256HexFile(file);
         String fileName = file.getFileName().toString();
-        String contentType = Files.probeContentType(file);
+        String contentType = PreviewPane.resolveContentType(Files.probeContentType(file), fileName);
         long totalSize = Files.size(file);
-        int totalChunks = (int) ((totalSize + Constants.FILE_CHUNK_SIZE - 1) / Constants.FILE_CHUNK_SIZE);
+        int totalChunks = totalSize == 0 ? 0
+                : (int) ((totalSize + Constants.FILE_CHUNK_SIZE - 1) / Constants.FILE_CHUNK_SIZE);
         String fileId = UUID.randomUUID().toString();
 
         FileMetaPayload meta = new FileMetaPayload(fileId, fileName, contentType, totalSize, totalChunks, checksum);
@@ -74,29 +75,33 @@ public class FileTransfer {
         );
         client.send(metaEnv);
 
-        try (FileInputStream fis = new FileInputStream(file.toFile())) {
-            byte[] buffer = new byte[Constants.FILE_CHUNK_SIZE];
-            int chunkIndex = 0;
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                byte[] chunkData = new byte[bytesRead];
-                System.arraycopy(buffer, 0, chunkData, 0, bytesRead);
-                String base64Data = Base64.getEncoder().encodeToString(chunkData);
+        if (totalChunks > 0) {
+            try (FileInputStream fis = new FileInputStream(file.toFile())) {
+                byte[] buffer = new byte[Constants.FILE_CHUNK_SIZE];
+                int chunkIndex = 0;
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    byte[] chunkData = new byte[bytesRead];
+                    System.arraycopy(buffer, 0, chunkData, 0, bytesRead);
+                    String base64Data = Base64.getEncoder().encodeToString(chunkData);
 
-                FileChunkPayload chunkPayload = new FileChunkPayload(fileId, chunkIndex, totalChunks, base64Data);
-                Envelope chunkEnv = new Envelope(
-                        MessageType.FILE_CHUNK.name(),
-                        UUID.randomUUID().toString(),
-                        peerId,
-                        roomId,
-                        0,
-                        System.currentTimeMillis(),
-                        chunkPayload
-                );
-                client.send(chunkEnv);
-                chunkIndex++;
+                    FileChunkPayload chunkPayload = new FileChunkPayload(fileId, chunkIndex, totalChunks, base64Data);
+                    Envelope chunkEnv = new Envelope(
+                            MessageType.FILE_CHUNK.name(),
+                            UUID.randomUUID().toString(),
+                            peerId,
+                            roomId,
+                            0,
+                            System.currentTimeMillis(),
+                            chunkPayload
+                    );
+                    client.send(chunkEnv);
+                    chunkIndex++;
+                }
             }
         }
+
+        notifyPreview(file, contentType, fileName);
     }
 
     public void handle(Envelope env) {
@@ -113,7 +118,6 @@ public class FileTransfer {
                 handleFileChunk(env);
                 break;
             case "FILE_CHUNK_ACK":
-                // optional: retransmit missing chunks
                 break;
         }
     }
@@ -125,26 +129,39 @@ public class FileTransfer {
         }
 
         String fileName = meta.getFileName();
-        String localPath = Constants.DEFAULT_FILES_PATH + "/" + meta.getFileId() + "_" + fileName;
+        Path localFilePath = Paths.get(Constants.DEFAULT_FILES_PATH,
+                meta.getFileId() + "_" + sanitizeFileName(fileName));
+
+        try {
+            Files.createDirectories(localFilePath.getParent());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
 
         FileRecord record = new FileRecord(
                 meta.getFileId(),
                 env.getMessageId(),
                 fileName,
-                meta.getContentType(),
+                PreviewPane.resolveContentType(meta.getContentType(), fileName),
                 meta.getTotalSize(),
                 meta.getTotalChunks(),
                 meta.getChecksum(),
-                localPath,
+                localFilePath.toString(),
                 0,
                 "PENDING"
         );
         fileRepo.upsert(record);
 
-        try (RandomAccessFile raf = new RandomAccessFile(localPath, "rw")) {
+        try (RandomAccessFile raf = new RandomAccessFile(localFilePath.toFile(), "rw")) {
             raf.setLength(meta.getTotalSize());
         } catch (IOException e) {
             e.printStackTrace();
+            return;
+        }
+
+        if (meta.getTotalChunks() == 0) {
+            onFileComplete(env.getSenderId(), meta.getFileId());
         }
     }
 
@@ -181,34 +198,58 @@ public class FileTransfer {
                 received >= record.getTotalChunks() ? "COMPLETE" : "PENDING");
 
         if (received >= record.getTotalChunks()) {
-            onFileComplete(env.getSenderId(), record);
+            onFileComplete(env.getSenderId(), chunk.getFileId());
         }
     }
 
-    private void onFileComplete(String senderId, FileRecord record) {
-        String localPath = record.getLocalPath();
+    private void onFileComplete(String senderId, String fileId) {
+        var recordOpt = fileRepo.findByFileId(fileId);
+        if (recordOpt.isEmpty()) {
+            return;
+        }
+        FileRecord record = recordOpt.get();
+        Path filePath = Paths.get(record.getLocalPath());
+
+        if (!Files.exists(filePath)) {
+            System.err.println("Received file missing on disk: " + record.getFileName());
+            return;
+        }
+
         try {
-            String actualChecksum = HashUtil.sha256HexFile(Paths.get(localPath));
+            String actualChecksum = HashUtil.sha256HexFile(filePath);
             if (!actualChecksum.equals(record.getChecksum())) {
-                System.err.println("File checksum mismatch: " + record.getFileName());
-                return;
+                System.err.println("File checksum mismatch: " + record.getFileName()
+                        + " (still attempting preview)");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return;
         }
 
         String senderLabel = localPeerId.equals(senderId) ? "You"
                 : peerNicknames.getOrDefault(senderId, senderId);
+        String contentType = PreviewPane.resolveContentType(record.getContentType(), record.getFileName());
+        String fileName = record.getFileName();
+        long totalSize = record.getTotalSize();
 
         Platform.runLater(() -> {
-            Path filePath = Paths.get(localPath);
-            String contentType = record.getContentType();
-            String fileName = record.getFileName();
-            if (PreviewPane.canPreview(contentType, fileName)) {
-                preview.showFile(filePath, contentType, fileName);
-            }
-            chat.appendFileNotice(senderLabel, fileName, record.getTotalSize());
+            notifyPreview(filePath, contentType, fileName);
+            chat.appendFileNotice(senderLabel, fileName, totalSize);
         });
+    }
+
+    private void notifyPreview(Path path, String contentType, String fileName) {
+        Runnable show = () -> preview.showFile(path, contentType, fileName);
+        if (Platform.isFxApplicationThread()) {
+            show.run();
+        } else {
+            Platform.runLater(show);
+        }
+    }
+
+    private static String sanitizeFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return "file";
+        }
+        return fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
     }
 }
