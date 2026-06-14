@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LanIM2 — Class Dependency Diagram</title>
+<script src="https://unpkg.com/vis-network@9.1.6/dist/vis-network.min.js"></script>
+<style>
+:root {
+    --bg: #1a1d23;
+    --panel-bg: #21252b;
+    --border: #333842;
+    --text: #cdd6e0;
+    --text-dim: #7f848e;
+    --accent: #528bff;
+    --header-bg: #282c34;
+    --hover-bg: #2c313a;
+    --field-color: #e5c07b;
+    --method-color: #61afef;
+    --type-color: #98c379;
+    --keyword: #c678dd;
+    --external: #5c6370;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', 'SF Mono', 'Cascadia Code', Consolas, monospace;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+#toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+    flex-shrink: 0;
+}
+#toolbar .title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 12px;
+    white-space: nowrap;
+}
+#searchBox {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 4px;
+    width: 220px;
+    font-size: 13px;
+    outline: none;
+}
+#searchBox:focus { border-color: var(--accent); }
+#searchBox::placeholder { color: var(--text-dim); }
+.toolbar-btn {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+    transition: background .15s;
+}
+.toolbar-btn:hover { background: var(--hover-bg); }
+.toolbar-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+#mainContainer {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+#graphContainer {
+    flex: 1;
+    position: relative;
+    background: var(--bg);
+    min-width: 0;
+}
+#graph {
+    width: 100%;
+    height: 100%;
+}
+#legend {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 5;
+}
+#legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.legend-label {
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+#sidebar {
+    width: 360px;
+    background: var(--panel-bg);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: width .2s;
+}
+#sidebar.collapsed { width: 0; }
+#sidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+#sidebarClose {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+#sidebarClose:hover { color: var(--text); background: var(--hover-bg); }
+#sidebarContent {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+    font-size: 12px;
+}
+#sidebarPlaceholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px;
+}
+.sidebar-section { margin-bottom: 16px; }
+.sidebar-section h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+}
+.sidebar-class-name { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.sidebar-fqn { color: var(--text-dim); font-size: 11px; margin-bottom: 6px; word-break: break-all; }
+.sidebar-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.sidebar-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(82,139,255,.15);
+    color: var(--accent);
+    font-weight: 600;
+}
+.sidebar-badge.extends-badge { background: rgba(198,120,221,.15); color: var(--keyword); }
+.sidebar-badge.implements-badge { background: rgba(97,175,239,.15); color: var(--method-color); }
+.field-row, .method-row {
+    padding: 3px 0;
+    border-radius: 2px;
+    display: flex;
+    align-items: baseline;
+}
+.method-row .method-sig { color: var(--method-color); }
+.field-row .field-name { color: var(--field-color); }
+.field-row .field-type { color: var(--text-dim); margin-left: auto; font-size: 11px; }
+.method-row .method-ret { color: var(--type-color); margin-left: auto; font-size: 11px; }
+.sep { color: var(--text-dim); margin: 0 3px; }
+#sidebarContent .empty-hint { color: var(--text-dim); font-style: italic; font-size: 11px; }
+.vis-tooltip {
+    background: var(--panel-bg) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    white-space: nowrap !important;
+}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+    <span class="title">LanIM2 — Dependency Graph</span>
+    <input type="text" id="searchBox" placeholder="Search class...">
+    <button class="toolbar-btn" onclick="resetView()" title="Reset view">⟲ Reset</button>
+    <button class="toolbar-btn" id="btnExtends" onclick="toggleEdgeType('extends')">⤒ extends</button>
+    <button class="toolbar-btn" id="btnImplements" onclick="toggleEdgeType('implements')">⤓ implements</button>
+    <button class="toolbar-btn" id="btnContains" onclick="toggleEdgeType('contains')">⊃ contains</button>
+    <button class="toolbar-btn active" id="btnField" onclick="toggleEdgeType('has-field')">● has-field</button>
+</div>
+
+<div id="mainContainer">
+    <div id="graphContainer">
+        <div id="graph"></div>
+        <div id="legend"></div>
+    </div>
+    <div id="sidebar">
+        <div id="sidebarHeader">
+            <span>Details</span>
+            <button id="sidebarClose" onclick="toggleSidebar()">✕</button>
+        </div>
+        <div id="sidebarContent">
+            <div id="sidebarPlaceholder">Click a node to inspect</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Node metadata (fields, methods, supertypes) ──────────────────────────────
+const META = {
+"Launcher": {
+    kind:"class", pkg:"root",
+    extends:"javafx.application.Application",
+    fields:[
+        {name:"client",type:"ImClient",access:"private"},
+        {name:"stage",type:"Stage",access:"private"},
+        {name:"tlsContext",type:"TlsContext",access:"private"},
+        {name:"localPeerId",type:"String",access:"private final"}
+    ],
+    methods:[
+        {sig:"start(Stage)",ret:"void",access:"public",anno:"@Override"},
+        {sig:"doConnect(String,String,boolean,String)",ret:"void",access:"private"},
+        {sig:"showChatView(JoinAckPayload,String)",ret:"void",access:"private"},
+        {sig:"shutdown()",ret:"void",access:"private"},
+        {sig:"parseServerAddress(String)",ret:"HostPort",access:"private static"},
+        {sig:"main(String[])",ret:"void",access:"public static"}
+    ],
+    innerTypes:["HostPort"]
+},
+"HostPort": {
+    kind:"record", pkg:"root",
+    fields:[
+        {name:"host",type:"String"},
+        {name:"port",type:"int"}
+    ],
+    methods:[],
+    innerTypes:[]
+},
+"ImClient": {
+    kind:"class", pkg:"client",
+    fields:[
+        {name:"tlsContext",type:"TlsContext",access:"private final"},
+        {name:"channel",type:"SocketChannel",access:"private"},
+        {name:"listener",type:"InboundListener",access:"private"},
+        {name:"running",type:"boolean",access:"private volatile"},
+        {name:"readThread",type:"Thread",access:"private"},
+        {name:"joinFuture",type:"CompletableFuture<JoinAckPayload>",access:"private"}
+    ],
+    methods:[
+        {sig:"connectAndJoin(String,int,boolean,String,String,String)",ret:"JoinAckPayload",access:"public"},
+        {sig:"send(Envelope)",ret:"void",access:"public"},
+        {sig:"setListener(InboundListener)",ret:"void",access:"public"},
+        {sig:"close()",ret:"void",access:"public"}
+    ],
+    innerTypes:["InboundListener"]
+},
+"InboundListener": {
+    kind:"interface", pkg:"client",
+    fields:[],
+    methods:[
+        {sig:"onEnvelope(Envelope)",ret:"void",access:"public"}
+    ],
+    innerTypes:[]
+},
+"ChatCoordinator": {
+    kind:"class", pkg:"client",
+    implements:["ImClient.InboundListener"],
+    fields:[
+        {name:"client",type:"ImClient",access:"private final"},
+        {name:"repo",type:"MessageRepo",access:"private final"},
+        {name:"fileTransfer",type:"FileTransfer",access:"private final"},
+        {name:"members",type:"MemberPane",access:"private final"},
+        {name:"chat",type:"ChatPane",access:"private final"},
+        {name:"preview",type:"PreviewPane",access:"private final"},
+        {name:"localPeerId",type:"String",access:"private final"},
+        {name:"localNickname",type:"String",access:"private final"},
+        {name:"roomId",type:"String",access:"private final"},
+        {name:"peerNicknames",type:"Map<String,String>",access:"private final"}
+    ],
+    methods:[
+        {sig:"getMemberPane()",ret:"MemberPane",access:"public"},
+        {sig:"getChatPane()",ret:"ChatPane",access:"public"},
+        {sig:"getPreviewPane()",ret:"PreviewPane",access:"public"},
+        {sig:"onJoined(JoinAckPayload)",ret:"void",access:"public"},
+        {sig:"onEnvelope(Envelope)",ret:"void",access:"public",anno:"@Override"},
+        {sig:"sendText(String)",ret:"void",access:"public"},
+        {sig:"sendFile(Path)",ret:"void",access:"public"}
+    ],
+    innerTypes:[]
+},
+"FileTransfer": {
+    kind:"class", pkg:"client",
+    fields:[
+        {name:"client",type:"ImClient",access:"private final"},
+        {name:"fileRepo",type:"FileRepo",access:"private final"},
+        {name:"chat",type:"ChatPane",access:"private final"},
+        {name:"preview",type:"PreviewPane",access:"private final"},
+        {name:"localPeerId",type:"String",access:"private final"},
+        {name:"roomId",type:"String",access:"private final"},
+        {name:"peerNicknames",type:"Map<String,String>",access:"private final"}
+    ],
+    methods:[
+        {sig:"onUserJoined(String,String)",ret:"void",access:"public"},
+        {sig:"onUserLeft(String)",ret:"void",access:"public"},
+        {sig:"send(Path,String,String)",ret:"void",access:"public"},
+        {sig:"handle(Envelope)",ret:"void",access:"public"},
+        {sig:"handleFileMeta(Envelope)",ret:"void",access:"private"},
+        {sig:"handleFileChunk(Envelope)",ret:"void",access:"private"},
+        {sig:"onFileComplete(String,String)",ret:"void",access:"private"},
+        {sig:"notifyPreview(Path,String,String)",ret:"void",access:"private"},
+        {sig:"sanitizeFileName(String)",ret:"String",access:"private static"}
+    ],
+    innerTypes:[]
+},
+"ImServer": {
+    kind:"class", pkg:"server",
+    fields:[
+        {name:"port",type:"int",access:"private final"},
+        {name:"useTls",type:"boolean",access:"private final"},
+        {name:"tlsContext",type:"TlsContext",access:"private final"},
+        {name:"registry",type:"RoomRegistry",access:"private final"},
+        {name:"executor",type:"ExecutorService",access:"private final"},
+        {name:"running",type:"boolean",access:"private volatile"},
+        {name:"serverSocket",type:"ServerSocket",access:"private"}
+    ],
+    methods:[
+        {sig:"start()",ret:"void",access:"public"},
+        {sig:"handleConnection(Socket)",ret:"void",access:"private"},
+        {sig:"shutdown()",ret:"void",access:"public"},
+        {sig:"main(String[])",ret:"void",access:"public static"}
+    ],
+    innerTypes:[]
+},
+"ClientSession": {
+    kind:"class", pkg:"server",
+    implements:["java.lang.Runnable"],
+    fields:[
+        {name:"channel",type:"SocketChannel",access:"private final"},
+        {name:"registry",type:"RoomRegistry",access:"private final"},
+        {name:"sendLock",type:"Object",access:"private final"},
+        {name:"peerId",type:"String",access:"private"},
+        {name:"nickname",type:"String",access:"private"},
+        {name:"roomId",type:"String",access:"private"},
+        {name:"joined",type:"boolean",access:"private"}
+    ],
+    methods:[
+        {sig:"run()",ret:"void",access:"public",anno:"@Override"},
+        {sig:"send(Envelope)",ret:"void",access:"void"},
+        {sig:"sendRaw(byte[])",ret:"void",access:"void"},
+        {sig:"onJoin(Envelope)",ret:"void",access:"private"},
+        {sig:"onChat(Envelope)",ret:"void",access:"private"},
+        {sig:"onFile(Envelope)",ret:"void",access:"private"},
+        {sig:"onDisconnect()",ret:"void",access:"private"}
+    ],
+    innerTypes:[]
+},
+"RoomRegistry": {
+    kind:"class", pkg:"server",
+    fields:[
+        {name:"roomSessions",type:"Map<String,Map<String,ClientSession>>",access:"private final"},
+        {name:"roomMembers",type:"Map<String,Map<String,String>>",access:"private final"},
+        {name:"roomSeq",type:"Map<String,AtomicInteger>",access:"private final"},
+        {name:"messageRepo",type:"MessageRepo",access:"private final"}
+    ],
+    methods:[
+        {sig:"join(String,String,String,ClientSession)",ret:"void",access:"public"},
+        {sig:"leave(String,String)",ret:"void",access:"public"},
+        {sig:"nextSeq(String)",ret:"int",access:"public"},
+        {sig:"saveAndTrim(Envelope)",ret:"void",access:"public"},
+        {sig:"recent(String,int)",ret:"List<Envelope>",access:"public"},
+        {sig:"members(String)",ret:"List<MemberInfo>",access:"public"},
+        {sig:"broadcastExcept(String,ClientSession,Envelope)",ret:"void",access:"public"},
+        {sig:"shutdown()",ret:"void",access:"public"}
+    ],
+    innerTypes:[]
+},
+"LoginView": {
+    kind:"class", pkg:"ui",
+    fields:[],
+    methods:[
+        {sig:"create(Stage,ConnectCallback)",ret:"Scene",access:"public static"}
+    ],
+    innerTypes:["ConnectCallback"]
+},
+"ConnectCallback": {
+    kind:"interface", pkg:"ui",
+    fields:[],
+    methods:[
+        {sig:"onConnect(String,String,boolean,String)",ret:"void",access:"public"}
+    ],
+    innerTypes:[]
+},
+"ChatView": {
+    kind:"class", pkg:"ui",
+    fields:[],
+    methods:[
+        {sig:"create(Stage,JoinAckPayload,ChatCoordinator,String)",ret:"Scene",access:"public static"}
+    ],
+    innerTypes:[]
+},
+"MemberPane": {
+    kind:"class", pkg:"ui",
+    fields:[
+        {name:"root",type:"VBox",access:"private final"},
+        {name:"headerLabel",type:"Label",access:"private final"},
+        {name:"listView",type:"ListView<String>",access:"private final"},
+        {name:"remotes",type:"Map<String,String>",access:"private final"},
+        {name:"localNickname",type:"String",access:"private"}
+    ],
+    methods:[
+        {sig:"getNode()",ret:"Node",access:"public"},
+        {sig:"setMembers(String,List<MemberRow>)",ret:"void",access:"public"},
+        {sig:"addMember(String,String)",ret:"void",access:"public"},
+        {sig:"removeMember(String)",ret:"void",access:"public"},
+        {sig:"size()",ret:"int",access:"public"},
+        {sig:"refresh()",ret:"void",access:"private"}
+    ],
+    innerTypes:[]
+},
+"ChatPane": {
+    kind:"class", pkg:"ui",
+    fields:[
+        {name:"root",type:"VBox",access:"private final"},
+        {name:"messageContainer",type:"VBox",access:"private final"},
+        {name:"scrollPane",type:"ScrollPane",access:"private final"},
+        {name:"messageField",type:"TextField",access:"private final"},
+        {name:"displayedMessageIds",type:"Set<String>",access:"private final"},
+        {name:"onSendAction",type:"Runnable",access:"private"},
+        {name:"onFileAction",type:"Runnable",access:"private"}
+    ],
+    methods:[
+        {sig:"getNode()",ret:"Node",access:"public"},
+        {sig:"getInputTextAndClear()",ret:"String",access:"public"},
+        {sig:"loadHistory(List<Envelope>)",ret:"void",access:"public"},
+        {sig:"append(Envelope,String)",ret:"void",access:"public"},
+        {sig:"appendLocalText(String,String)",ret:"void",access:"public"},
+        {sig:"appendFileNotice(String,String,long)",ret:"void",access:"public"},
+        {sig:"setOnSend(Runnable)",ret:"void",access:"public"},
+        {sig:"setOnFile(Runnable)",ret:"void",access:"public"},
+        {sig:"renderEnvelope(Envelope)",ret:"void",access:"private"},
+        {sig:"scrollToBottom()",ret:"void",access:"private"}
+    ],
+    innerTypes:[]
+},
+"PreviewPane": {
+    kind:"class", pkg:"ui",
+    fields:[
+        {name:"root",type:"VBox",access:"private final"},
+        {name:"titleLabel",type:"Label",access:"private final"},
+        {name:"previewArea",type:"StackPane",access:"private final"},
+        {name:"previewScroll",type:"ScrollPane",access:"private final"},
+        {name:"placeholderLabel",type:"Label",access:"private final"},
+        {name:"pdfToolbar",type:"HBox",access:"private final"},
+        {name:"pdfPrevButton",type:"Button",access:"private final"},
+        {name:"pdfNextButton",type:"Button",access:"private final"},
+        {name:"pdfPageLabel",type:"Label",access:"private final"},
+        {name:"pdfPageView",type:"ImageView",access:"private final"},
+        {name:"pdfDocument",type:"PDDocument",access:"private"},
+        {name:"pdfRenderer",type:"PDFRenderer",access:"private"},
+        {name:"pdfCurrentPage",type:"int",access:"private"},
+        {name:"pdfTotalPages",type:"int",access:"private"}
+    ],
+    methods:[
+        {sig:"getNode()",ret:"Node",access:"public"},
+        {sig:"showFile(Path,String,String)",ret:"void",access:"public"},
+        {sig:"clear()",ret:"void",access:"public"},
+        {sig:"canPreview(String,String)",ret:"boolean",access:"public static"},
+        {sig:"showImage(Path)",ret:"void",access:"private"},
+        {sig:"showPdf(Path)",ret:"void",access:"private"},
+        {sig:"showPdfPage(int)",ret:"void",access:"private"},
+        {sig:"showUnsupported(Path,String)",ret:"void",access:"private"},
+        {sig:"closePdfDocument()",ret:"void",access:"private"},
+        {sig:"openExternally(Path)",ret:"void",access:"private static"},
+        {sig:"fileTypeBadge(String)",ret:"String",access:"private static"},
+        {sig:"formatFileSize(Path)",ret:"String",access:"private static"},
+        {sig:"resolveContentType(String,String)",ret:"String",access:"public static"}
+    ],
+    innerTypes:[]
+},
+"Styles": {
+    kind:"class", pkg:"ui",
+    fields:[
+        {name:"STYLESHEET",type:"String",access:"private static final"}
+    ],
+    methods:[
+        {sig:"apply(Scene)",ret:"void",access:"public static"}
+    ],
+    innerTypes:[]
+},
+"Envelope": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"type",type:"String",access:"private"},
+        {name:"messageId",type:"String",access:"private"},
+        {name:"senderId",type:"String",access:"private"},
+        {name:"roomId",type:"String",access:"private"},
+        {name:"sequence",type:"int",access:"private"},
+        {name:"timestamp",type:"long",access:"private"},
+        {name:"payload",type:"Object",access:"private"}
+    ],
+    methods:[
+        {sig:"getType()",ret:"String",access:"public"},
+        {sig:"setType(String)",ret:"void",access:"public"},
+        {sig:"getMessageId()",ret:"String",access:"public"},
+        {sig:"setMessageId(String)",ret:"void",access:"public"},
+        {sig:"getSenderId()",ret:"String",access:"public"},
+        {sig:"setSenderId(String)",ret:"void",access:"public"},
+        {sig:"getRoomId()",ret:"String",access:"public"},
+        {sig:"setRoomId(String)",ret:"void",access:"public"},
+        {sig:"getSequence()",ret:"int",access:"public"},
+        {sig:"setSequence(int)",ret:"void",access:"public"},
+        {sig:"getTimestamp()",ret:"long",access:"public"},
+        {sig:"setTimestamp(long)",ret:"void",access:"public"},
+        {sig:"getPayload()",ret:"Object",access:"public"},
+        {sig:"setPayload(Object)",ret:"void",access:"public"}
+    ],
+    innerTypes:[]
+},
+"MessageType": {
+    kind:"enum", pkg:"model",
+    fields:[
+        {name:"JOIN"},
+        {name:"JOIN_ACK"},
+        {name:"USER_JOINED"},
+        {name:"USER_LEFT"},
+        {name:"CHAT_TEXT"},
+        {name:"FILE_META"},
+        {name:"FILE_CHUNK"},
+        {name:"FILE_CHUNK_ACK"}
+    ],
+    methods:[],
+    innerTypes:[]
+},
+"JoinPayload": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"peerId",type:"String",access:"private"},
+        {name:"nickname",type:"String",access:"private"},
+        {name:"roomSecret",type:"String",access:"private"}
+    ],
+    methods:[
+        {sig:"getPeerId()",ret:"String"}, {sig:"setPeerId(String)",ret:"void"},
+        {sig:"getNickname()",ret:"String"}, {sig:"setNickname(String)",ret:"void"},
+        {sig:"getRoomSecret()",ret:"String"}, {sig:"setRoomSecret(String)",ret:"void"}
+    ],
+    innerTypes:[]
+},
+"JoinAckPayload": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"assignedId",type:"String",access:"private"},
+        {name:"roomId",type:"String",access:"private"},
+        {name:"history",type:"List<Envelope>",access:"private"},
+        {name:"members",type:"List<MemberInfo>",access:"private"}
+    ],
+    methods:[
+        {sig:"getAssignedId()",ret:"String"}, {sig:"setAssignedId(String)",ret:"void"},
+        {sig:"getRoomId()",ret:"String"}, {sig:"setRoomId(String)",ret:"void"},
+        {sig:"getHistory()",ret:"List<Envelope>"}, {sig:"setHistory(List<Envelope>)",ret:"void"},
+        {sig:"getMembers()",ret:"List<MemberInfo>"}, {sig:"setMembers(List<MemberInfo>)",ret:"void"}
+    ],
+    innerTypes:["MemberInfo"]
+},
+"MemberInfo": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"peerId",type:"String",access:"private"},
+        {name:"nickname",type:"String",access:"private"}
+    ],
+    methods:[
+        {sig:"getPeerId()",ret:"String"}, {sig:"setPeerId(String)",ret:"void"},
+        {sig:"getNickname()",ret:"String"}, {sig:"setNickname(String)",ret:"void"}
+    ],
+    innerTypes:[]
+},
+"UserEventPayload": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"peerId",type:"String",access:"private"},
+        {name:"nickname",type:"String",access:"private"}
+    ],
+    methods:[
+        {sig:"getPeerId()",ret:"String"}, {sig:"setPeerId(String)",ret:"void"},
+        {sig:"getNickname()",ret:"String"}, {sig:"setNickname(String)",ret:"void"}
+    ],
+    innerTypes:[]
+},
+"ChatPayload": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"text",type:"String",access:"private"}
+    ],
+    methods:[
+        {sig:"getText()",ret:"String"}, {sig:"setText(String)",ret:"void"}
+    ],
+    innerTypes:[]
+},
+"FileMetaPayload": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"fileId",type:"String",access:"private"},
+        {name:"fileName",type:"String",access:"private"},
+        {name:"contentType",type:"String",access:"private"},
+        {name:"totalSize",type:"long",access:"private"},
+        {name:"totalChunks",type:"int",access:"private"},
+        {name:"checksum",type:"String",access:"private"}
+    ],
+    methods:[
+        {sig:"getFileId()",ret:"String"}, {sig:"setFileId(String)",ret:"void"},
+        {sig:"getFileName()",ret:"String"}, {sig:"setFileName(String)",ret:"void"},
+        {sig:"getContentType()",ret:"String"}, {sig:"setContentType(String)",ret:"void"},
+        {sig:"getTotalSize()",ret:"long"}, {sig:"setTotalSize(long)",ret:"void"},
+        {sig:"getTotalChunks()",ret:"int"}, {sig:"setTotalChunks(int)",ret:"void"},
+        {sig:"getChecksum()",ret:"String"}, {sig:"setChecksum(String)",ret:"void"}
+    ],
+    innerTypes:[]
+},
+"FileChunkPayload": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"fileId",type:"String",access:"private"},
+        {name:"chunkIndex",type:"int",access:"private"},
+        {name:"totalChunks",type:"int",access:"private"},
+        {name:"data",type:"String",access:"private"}
+    ],
+    methods:[
+        {sig:"getFileId()",ret:"String"}, {sig:"setFileId(String)",ret:"void"},
+        {sig:"getChunkIndex()",ret:"int"}, {sig:"setChunkIndex(int)",ret:"void"},
+        {sig:"getTotalChunks()",ret:"int"}, {sig:"setTotalChunks(int)",ret:"void"},
+        {sig:"getData()",ret:"String"}, {sig:"setData(String)",ret:"void"}
+    ],
+    innerTypes:[]
+},
+"FileChunkAckPayload": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"fileId",type:"String",access:"private"},
+        {name:"missingChunks",type:"List<Integer>",access:"private"}
+    ],
+    methods:[
+        {sig:"getFileId()",ret:"String"}, {sig:"setFileId(String)",ret:"void"},
+        {sig:"getMissingChunks()",ret:"List<Integer>"}, {sig:"setMissingChunks(List<Integer>)",ret:"void"}
+    ],
+    innerTypes:[]
+},
+"MemberRow": {
+    kind:"record", pkg:"model",
+    fields:[
+        {name:"peerId",type:"String"},
+        {name:"nickname",type:"String"}
+    ],
+    methods:[
+        {sig:"peerId()",ret:"String"},
+        {sig:"nickname()",ret:"String"}
+    ],
+    innerTypes:[]
+},
+"FileRecord": {
+    kind:"class", pkg:"model",
+    fields:[
+        {name:"fileId",type:"String",access:"private"},
+        {name:"messageId",type:"String",access:"private"},
+        {name:"fileName",type:"String",access:"private"},
+        {name:"contentType",type:"String",access:"private"},
+        {name:"totalSize",type:"long",access:"private"},
+        {name:"totalChunks",type:"int",access:"private"},
+        {name:"checksum",type:"String",access:"private"},
+        {name:"localPath",type:"String",access:"private"},
+        {name:"receivedChunks",type:"int",access:"private"},
+        {name:"status",type:"String",access:"private"}
+    ],
+    methods:[
+        {sig:"getFileId()",ret:"String"}, {sig:"setFileId(String)",ret:"void"},
+        {sig:"getMessageId()",ret:"String"}, {sig:"setMessageId(String)",ret:"void"},
+        {sig:"getFileName()",ret:"String"}, {sig:"setFileName(String)",ret:"void"},
+        {sig:"getContentType()",ret:"String"}, {sig:"setContentType(String)",ret:"void"},
+        {sig:"getTotalSize()",ret:"long"}, {sig:"setTotalSize(long)",ret:"void"},
+        {sig:"getTotalChunks()",ret:"int"}, {sig:"setTotalChunks(int)",ret:"void"},
+        {sig:"getChecksum()",ret:"String"}, {sig:"setChecksum(String)",ret:"void"},
+        {sig:"getLocalPath()",ret:"String"}, {sig:"setLocalPath(String)",ret:"void"},
+        {sig:"getReceivedChunks()",ret:"int"}, {sig:"setReceivedChunks(int)",ret:"void"},
+        {sig:"getStatus()",ret:"String"}, {sig:"setStatus(String)",ret:"void"}
+    ],
+    innerTypes:[]
+},
+"Database": {
+    kind:"class", pkg:"data",
+    fields:[],
+    methods:[
+        {sig:"init()",ret:"void",access:"public static"},
+        {sig:"connect()",ret:"Connection",access:"public static"},
+        {sig:"loadSchemaSql()",ret:"String",access:"private static"}
+    ],
+    innerTypes:[]
+},
+"MessageRepo": {
+    kind:"class", pkg:"data",
+    fields:[],
+    methods:[
+        {sig:"insert(Envelope)",ret:"void",access:"public"},
+        {sig:"recentByRoom(String,int)",ret:"List<Envelope>",access:"public"},
+        {sig:"trimRoom(String,int)",ret:"void",access:"public"},
+        {sig:"maxSequence(String)",ret:"int",access:"public"}
+    ],
+    innerTypes:[]
+},
+"FileRepo": {
+    kind:"class", pkg:"data",
+    fields:[],
+    methods:[
+        {sig:"upsert(FileRecord)",ret:"void",access:"public"},
+        {sig:"findByFileId(String)",ret:"Optional<FileRecord>",access:"public"},
+        {sig:"updateProgress(String,int,String)",ret:"void",access:"public"}
+    ],
+    innerTypes:[]
+},
+"FrameCodec": {
+    kind:"class", pkg:"net",
+    fields:[],
+    methods:[
+        {sig:"encode(Envelope)",ret:"byte[]",access:"public static"},
+        {sig:"decode(byte[])",ret:"Envelope",access:"public static"},
+        {sig:"decode(DataInputStream)",ret:"Envelope",access:"public static"}
+    ],
+    innerTypes:[]
+},
+"SocketChannel": {
+    kind:"class", pkg:"net",
+    fields:[
+        {name:"socket",type:"Socket",access:"private final"},
+        {name:"dis",type:"DataInputStream",access:"private final"},
+        {name:"dos",type:"DataOutputStream",access:"private final"},
+        {name:"open",type:"boolean",access:"private"}
+    ],
+    methods:[
+        {sig:"connect(String,int,boolean,TlsContext)",ret:"SocketChannel",access:"public static"},
+        {sig:"fromSocket(Socket,boolean)",ret:"SocketChannel",access:"public static"},
+        {sig:"writeFrame(byte[])",ret:"void",access:"public"},
+        {sig:"readFrame()",ret:"byte[]",access:"public"},
+        {sig:"close()",ret:"void",access:"public"},
+        {sig:"isOpen()",ret:"boolean",access:"public"}
+    ],
+    innerTypes:[]
+},
+"TlsContext": {
+    kind:"class", pkg:"net",
+    fields:[
+        {name:"sslContext",type:"SSLContext",access:"private"},
+        {name:"keyStorePath",type:"String",access:"private final"},
+        {name:"keyStorePassword",type:"String",access:"private final"},
+        {name:"trustStorePath",type:"String",access:"private final"},
+        {name:"trustStorePassword",type:"String",access:"private final"}
+    ],
+    methods:[
+        {sig:"init()",ret:"void",access:"public"},
+        {sig:"loadKeyManagers()",ret:"KeyManager[]",access:"private"},
+        {sig:"generateKeystore(Path,String)",ret:"void",access:"private"},
+        {sig:"serverContext()",ret:"SSLContext",access:"public"},
+        {sig:"clientContext()",ret:"SSLContext",access:"public"}
+    ],
+    innerTypes:[]
+},
+"Constants": {
+    kind:"class", pkg:"util",
+    fields:[
+        {name:"DEFAULT_SERVER_HOST",type:"String",access:"public static final"},
+        {name:"DEFAULT_SERVER_PORT",type:"int",access:"public static final"},
+        {name:"JOIN_HISTORY_LIMIT",type:"int",access:"public static final"},
+        {name:"ROOM_MESSAGE_CAP",type:"int",access:"public static final"},
+        {name:"FILE_CHUNK_SIZE",type:"int",access:"public static final"},
+        {name:"DEFAULT_DB_PATH",type:"String",access:"public static final"},
+        {name:"DEFAULT_FILES_PATH",type:"String",access:"public static final"},
+        {name:"JOIN_TIMEOUT_MS",type:"int",access:"public static final"}
+    ],
+    methods:[],
+    innerTypes:[]
+},
+"HashUtil": {
+    kind:"class", pkg:"util",
+    fields:[],
+    methods:[
+        {sig:"sha512Hex(String)",ret:"String",access:"public static"},
+        {sig:"sha256Hex(byte[])",ret:"String",access:"public static"},
+        {sig:"sha256HexFile(Path)",ret:"String",access:"public static"},
+        {sig:"hashHex(String,byte[])",ret:"String",access:"private static"},
+        {sig:"bytesToHex(byte[])",ret:"String",access:"private static"}
+    ],
+    innerTypes:[]
+},
+"JsonUtil": {
+    kind:"class", pkg:"util",
+    fields:[
+        {name:"GSON",type:"Gson",access:"private static final"}
+    ],
+    methods:[
+        {sig:"gson()",ret:"Gson",access:"public static"},
+        {sig:"toJson(Object)",ret:"String",access:"public static"},
+        {sig:"toJsonBytes(Object)",ret:"byte[]",access:"public static"},
+        {sig:"fromJson(byte[],Class)",ret:"T",access:"public static"},
+        {sig:"fromPayload(Object,Class)",ret:"T",access:"public static"}
+    ],
+    innerTypes:[]
+},
+"Validator": {
+    kind:"class", pkg:"util",
+    fields:[],
+    methods:[
+        {sig:"validateNickname(String)",ret:"String",access:"public static"},
+        {sig:"validateRoomSecret(String)",ret:"String",access:"public static"},
+        {sig:"validateChatText(String)",ret:"String",access:"public static"}
+    ],
+    innerTypes:[]
+}
+};
+
+// ── Package colors ──────────────────────────────────────────────────────────
+const PKG_COLORS = {
+    root:   {bg:"#E74C3C", border:"#C0392B", fg:"#fff"},
+    client: {bg:"#2ECC71", border:"#27AE60", fg:"#fff"},
+    server: {bg:"#3498DB", border:"#2980B9", fg:"#fff"},
+    ui:     {bg:"#9B59B6", border:"#8E44AD", fg:"#fff"},
+    model:  {bg:"#F1C40F", border:"#D4AC0D", fg:"#333"},
+    data:   {bg:"#E67E22", border:"#D35400", fg:"#fff"},
+    net:    {bg:"#1ABC9C", border:"#16A085", fg:"#fff"},
+    util:   {bg:"#95A5A6", border:"#7F8C8D", fg:"#fff"},
+    external:{bg:"#444a54", border:"#5c6370", fg:"#888"}
+};
+
+const PKG_LABELS = {
+    root:"com.alpha.lanim",
+    client:"com.alpha.lanim.client",
+    server:"com.alpha.lanim.server",
+    ui:"com.alpha.lanim.ui",
+    model:"com.alpha.lanim.model",
+    data:"com.alpha.lanim.data",
+    net:"com.alpha.lanim.net",
+    util:"com.alpha.lanim.util",
+    external:"External (JDK/JavaFX)"
+};
+
+const KIND_SHAPES = {
+    class: "box",
+    interface: "ellipse",
+    enum: "hexagon",
+    record: "diamond"
+};
+
+// ── Nodes ────────────────────────────────────────────────────────────────────
+const nodes = new vis.DataSet(
+    Object.entries(META).map(([id, m]) => ({
+        id, label: id, group: m.pkg,
+        shape: KIND_SHAPES[m.kind] || "box",
+        font: { size: 13, face: "Segoe UI, sans-serif", color: "#cdd6e0" },
+        margin: { top: 8, bottom: 8, left: 12, right: 12 },
+        title: `<b>${id}</b><br>${PKG_LABELS[m.pkg] || m.pkg}<br>kind: ${m.kind}`
+    }))
+);
+
+// External nodes
+nodes.add([
+    {id:"javafx.application.Application", label:"Application", group:"external",
+     shape:"box", font:{size:11,color:"#888"},
+     margin:{top:6,bottom:6,left:10,right:10},
+     title:"<b>javafx.application.Application</b><br>External (JavaFX)"},
+    {id:"java.lang.Runnable", label:"Runnable", group:"external",
+     shape:"ellipse", font:{size:11,color:"#888"},
+     margin:{top:6,bottom:6,left:10,right:10},
+     title:"<b>java.lang.Runnable</b><br>External (JDK)"}
+]);
+
+// ── Edges ────────────────────────────────────────────────────────────────────
+function mkEdge(from, to, type, opts) {
+    const base = {
+        from, to, _type: type,
+        smooth: {type:"cubicBezier"},
+        font: {size:9, background:"rgba(26,29,35,.85)", strokeWidth:0}
+    };
+    if (type === "extends") {
+        return {...base, ...opts,
+            arrows:"to", color:{color:"#E74C3C",opacity:.6}, width:3, dashes:false,
+            font:{...base.font, color:"#E74C3C"}, label:"extends"};
+    }
+    if (type === "implements") {
+        return {...base, ...opts,
+            arrows:"to", color:{color:"#3498DB",opacity: opts.toExternal ? .4 : .7}, dashes:[8,4], width:2,
+            font:{...base.font, color: opts.toExternal ? "#666" : "#3498DB"}, label:"implements"};
+    }
+    if (type === "contains") {
+        return {...base, ...opts,
+            arrows:"to", color:{color:"#c678dd",opacity:.8}, dashes:[4,4], width:1.5,
+            font:{...base.font, color:"#c678dd"}, label:"contains"};
+    }
+    return {...base, ...opts,
+        arrows:"to", color:{color:"#7f848e"}, width:1.8, dashes:false,
+        font:{...base.font, color:"#7f848e"}};
+}
+
+const edges = new vis.DataSet([
+    mkEdge("Launcher", "javafx.application.Application", "extends"),
+    mkEdge("ChatCoordinator", "InboundListener", "implements"),
+    mkEdge("ClientSession", "java.lang.Runnable", "implements", {toExternal:true}),
+    mkEdge("ImClient", "InboundListener", "contains"),
+    mkEdge("LoginView", "ConnectCallback", "contains"),
+    mkEdge("JoinAckPayload", "MemberInfo", "contains"),
+    mkEdge("Launcher", "HostPort", "contains"),
+    // has-field
+    mkEdge("Launcher", "ImClient", "has-field", {label:"has-field"}),
+    mkEdge("Launcher", "TlsContext", "has-field"),
+    mkEdge("ImClient", "TlsContext", "has-field"),
+    mkEdge("ImClient", "SocketChannel", "has-field"),
+    mkEdge("ChatCoordinator", "ImClient", "has-field"),
+    mkEdge("ChatCoordinator", "MessageRepo", "has-field"),
+    mkEdge("ChatCoordinator", "FileTransfer", "has-field"),
+    mkEdge("ChatCoordinator", "MemberPane", "has-field"),
+    mkEdge("ChatCoordinator", "ChatPane", "has-field"),
+    mkEdge("ChatCoordinator", "PreviewPane", "has-field"),
+    mkEdge("FileTransfer", "ImClient", "has-field"),
+    mkEdge("FileTransfer", "FileRepo", "has-field"),
+    mkEdge("FileTransfer", "ChatPane", "has-field"),
+    mkEdge("FileTransfer", "PreviewPane", "has-field"),
+    mkEdge("ImServer", "TlsContext", "has-field"),
+    mkEdge("ImServer", "RoomRegistry", "has-field"),
+    mkEdge("ClientSession", "SocketChannel", "has-field"),
+    mkEdge("ClientSession", "RoomRegistry", "has-field"),
+    mkEdge("RoomRegistry", "MessageRepo", "has-field")
+]);
+
+// ── Graph ────────────────────────────────────────────────────────────────────
+const container = document.getElementById("graph");
+const network = new vis.Network(container, {nodes, edges}, {
+    groups: {
+        root:   {color:{background:"#E74C3C", border:"#C0392B", highlight:{background:"#f56254", border:"#C0392B"}}},
+        client: {color:{background:"#2ECC71", border:"#27AE60", highlight:{background:"#58d68d", border:"#27AE60"}}},
+        server: {color:{background:"#3498DB", border:"#2980B9", highlight:{background:"#5dade2", border:"#2980B9"}}},
+        ui:     {color:{background:"#9B59B6", border:"#8E44AD", highlight:{background:"#af7ac5", border:"#8E44AD"}}},
+        model:  {color:{background:"#F1C40F", border:"#D4AC0D", highlight:{background:"#f4d03f", border:"#D4AC0D"}}},
+        data:   {color:{background:"#E67E22", border:"#D35400", highlight:{background:"#eb984e", border:"#D35400"}}},
+        net:    {color:{background:"#1ABC9C", border:"#16A085", highlight:{background:"#48c9b0", border:"#16A085"}}},
+        util:   {color:{background:"#95A5A6", border:"#7F8C8D", highlight:{background:"#abb2b3", border:"#7F8C8D"}}},
+        external:{color:{background:"#3a3f4b", border:"#555b66", highlight:{background:"#4a505c", border:"#666c77"}}}
+    },
+    nodes: {
+        shapeProperties: {borderRadius: 4},
+        borderWidth: 2
+    },
+    edges: {
+        smooth: {type:"cubicBezier", forceDirection:"none", roundness:0.4},
+        font: {align:"horizontal", size:9, color:"#7f848e", background:"rgba(26,29,35,.85)", strokeWidth:0}
+    },
+    physics: {
+        forceAtlas2Based: {
+            gravitationalConstant: -26,
+            centralGravity: 0.005,
+            springLength: 230,
+            springConstant: 0.18
+        },
+        maxVelocity: 50,
+        solver: "forceAtlas2Based",
+        stabilization: {iterations: 200}
+    },
+    interaction: {hover: true, zoomView: true, dragView: true, navigationButtons: false}
+});
+
+// ── Legend ───────────────────────────────────────────────────────────────────
+const legendEl = document.getElementById("legend");
+const legendHTML = Object.entries(PKG_COLORS).map(([key, c]) =>
+    `<div class="legend-item"><span class="legend-color" style="background:${c.bg}"></span><span class="legend-label">${PKG_LABELS[key] || key}</span></div>`
+).join("");
+legendEl.innerHTML = legendHTML;
+
+// ── Sidebar ──────────────────────────────────────────────────────────────────
+function renderSidebar(nodeId) {
+    const meta = META[nodeId];
+    if (!meta) {
+        document.getElementById("sidebarContent").innerHTML = '<div id="sidebarPlaceholder">No metadata available</div>';
+        return;
+    }
+    const c = PKG_COLORS[meta.pkg] || PKG_COLORS.external;
+    let html = `<div class="sidebar-class-name">${nodeId}</div>`;
+    html += `<div class="sidebar-fqn">${PKG_LABELS[meta.pkg] || meta.pkg}.${nodeId}</div>`;
+
+    let badges = `<span class="sidebar-badge" style="background:${c.bg}22;color:${c.bg}">${meta.pkg}</span>`;
+    badges += `<span class="sidebar-badge">${meta.kind}</span>`;
+    if (meta.extends) {
+        badges += `<span class="sidebar-badge extends-badge">extends ${meta.extends}</span>`;
+    }
+    if (meta.implements) {
+        meta.implements.forEach(ifc => {
+            badges += `<span class="sidebar-badge implements-badge">implements ${ifc}</span>`;
+        });
+    }
+    html += `<div class="sidebar-badges">${badges}</div>`;
+
+    // Fields
+    html += `<div class="sidebar-section"><h4>Fields (${meta.fields.length})</h4>`;
+    if (meta.kind === "enum") {
+        meta.fields.forEach(f => {
+            html += `<div class="field-row"><span class="field-name">${f.name}</span></div>`;
+        });
+    } else if (meta.fields.length === 0) {
+        html += `<div class="empty-hint">No fields</div>`;
+    } else {
+        meta.fields.forEach(f => {
+            const acc = f.access || "";
+            html += `<div class="field-row"><span class="sep">${acc}</span> <span class="field-name">${f.name}</span><span class="field-type">${f.type || ""}</span></div>`;
+        });
+    }
+    html += `</div>`;
+
+    // Methods
+    html += `<div class="sidebar-section"><h4>Methods (${meta.methods.length})</h4>`;
+    if (meta.methods.length === 0) {
+        html += `<div class="empty-hint">No methods</div>`;
+    } else {
+        meta.methods.forEach(m => {
+            const acc = m.access || "";
+            const anno = m.anno ? `<span style="color:var(--keyword)">${m.anno} </span>` : "";
+            html += `<div class="method-row"><span class="sep">${acc}</span> ${anno}<span class="method-sig">${m.sig}</span><span class="method-ret">${m.ret || ""}</span></div>`;
+        });
+    }
+    html += `</div>`;
+
+    // Inner types
+    if (meta.innerTypes.length > 0) {
+        html += `<div class="sidebar-section"><h4>Inner Types (${meta.innerTypes.length})</h4>`;
+        meta.innerTypes.forEach(t => {
+            html += `<div class="field-row"><span class="field-name">${t}</span></div>`;
+        });
+        html += `</div>`;
+    }
+
+    document.getElementById("sidebarContent").innerHTML = html;
+}
+
+network.on("click", function(params) {
+    if (params.nodes.length > 0) {
+        const nodeId = params.nodes[0];
+        renderSidebar(nodeId);
+    }
+});
+
+network.on("doubleClick", function(params) {
+    if (params.nodes.length > 0) {
+        network.focus(params.nodes[0], {scale: 1.5, animation: true});
+    }
+});
+
+// ── Search ───────────────────────────────────────────────────────────────────
+const searchBox = document.getElementById("searchBox");
+searchBox.addEventListener("input", function() {
+    const q = this.value.trim().toLowerCase();
+    if (!q) {
+        nodes.forEach(n => nodes.update({id: n.id, opacity: 1, font: {size: (n.group==="external"?11:13)}}));
+        edges.forEach(e => edges.update({id: e.id, hidden: false}));
+        return;
+    }
+    const matchedIds = new Set();
+    nodes.forEach(n => {
+        if (n.id.toLowerCase().includes(q)) {
+            matchedIds.add(n.id);
+            nodes.update({id: n.id, opacity: 1});
+        } else {
+            nodes.update({id: n.id, opacity: 0.15});
+        }
+    });
+    edges.forEach(e => {
+        const show = matchedIds.has(e.from) || matchedIds.has(e.to);
+        edges.update({id: e.id, hidden: !show});
+    });
+});
+
+// ── Edge Toggle ──────────────────────────────────────────────────────────────
+let hiddenTypes = {};
+function toggleEdgeType(type) {
+    hiddenTypes[type] = !hiddenTypes[type];
+    const btn = document.getElementById(
+        type === "has-field" ? "btnField" :
+        type === "extends" ? "btnExtends" :
+        type === "implements" ? "btnImplements" : "btnContains"
+    );
+    if (hiddenTypes[type]) btn.classList.remove("active");
+    else btn.classList.add("active");
+
+    edges.forEach(e => {
+        if (e._type === type) edges.update({id: e.id, hidden: hiddenTypes[type]});
+    });
+}
+
+// ── Sidebar Toggle ───────────────────────────────────────────────────────────
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("collapsed");
+}
+
+// ── Reset View ───────────────────────────────────────────────────────────────
+function resetView() {
+    network.fit({animation: true});
+    searchBox.value = "";
+    nodes.forEach(n => nodes.update({id: n.id, opacity: 1, font:{size:(n.group==="external"?11:13)}}));
+    edges.forEach(e => edges.update({id: e.id, hidden: !!hiddenTypes[e._type]}));
+}
+
+// Initial fit
+setTimeout(() => network.fit({animation: false}), 800);
+</script>
+</body>
+</html>

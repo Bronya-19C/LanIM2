@@ -88,6 +88,9 @@ public class ChatCoordinator implements ImClient.InboundListener {
                 } catch (java.sql.SQLException e) {
                     e.printStackTrace();
                 }
+                if ("FILE_META".equals(env.getType())) {
+                    fileTransfer.handle(env);
+                }
             }
         }
     }

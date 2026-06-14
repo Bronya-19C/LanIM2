@@ -139,6 +139,14 @@ public class FileTransfer {
             return;
         }
 
+        boolean fileAlreadyComplete = false;
+        try {
+            fileAlreadyComplete = Files.exists(localFilePath)
+                    && meta.getTotalChunks() > 0
+                    && Files.size(localFilePath) == meta.getTotalSize();
+        } catch (IOException ignored) {
+        }
+
         FileRecord record = new FileRecord(
                 meta.getFileId(),
                 env.getMessageId(),
@@ -148,19 +156,21 @@ public class FileTransfer {
                 meta.getTotalChunks(),
                 meta.getChecksum(),
                 localFilePath.toString(),
-                0,
-                "PENDING"
+                fileAlreadyComplete ? meta.getTotalChunks() : 0,
+                fileAlreadyComplete ? "COMPLETE" : "PENDING"
         );
         fileRepo.upsert(record);
 
-        try (RandomAccessFile raf = new RandomAccessFile(localFilePath.toFile(), "rw")) {
-            raf.setLength(meta.getTotalSize());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
+        if (!fileAlreadyComplete) {
+            try (RandomAccessFile raf = new RandomAccessFile(localFilePath.toFile(), "rw")) {
+                raf.setLength(meta.getTotalSize());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
         }
 
-        if (meta.getTotalChunks() == 0) {
+        if (meta.getTotalChunks() == 0 || fileAlreadyComplete) {
             onFileComplete(env.getSenderId(), meta.getFileId());
         }
     }
