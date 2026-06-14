@@ -884,7 +884,6 @@ const nodes = new vis.DataSet(
     Object.entries(META).map(([id, m]) => ({
         id, label: id, group: m.pkg,
         shape: KIND_SHAPES[m.kind] || "box",
-        font: { size: 13, face: "Segoe UI, sans-serif", color: "#cdd6e0" },
         margin: { top: 8, bottom: 8, left: 12, right: 12 },
         title: `<b>${id}</b><br>${PKG_LABELS[m.pkg] || m.pkg}<br>kind: ${m.kind}`
     }))
@@ -893,11 +892,11 @@ const nodes = new vis.DataSet(
 // External nodes
 nodes.add([
     {id:"javafx.application.Application", label:"Application", group:"external",
-     shape:"box", font:{size:11,color:"#888"},
+     shape:"box",
      margin:{top:6,bottom:6,left:10,right:10},
      title:"<b>javafx.application.Application</b><br>External (JavaFX)"},
     {id:"java.lang.Runnable", label:"Runnable", group:"external",
-     shape:"ellipse", font:{size:11,color:"#888"},
+     shape:"ellipse",
      margin:{top:6,bottom:6,left:10,right:10},
      title:"<b>java.lang.Runnable</b><br>External (JDK)"}
 ]);
@@ -963,15 +962,15 @@ const edges = new vis.DataSet([
 const container = document.getElementById("graph");
 const network = new vis.Network(container, {nodes, edges}, {
     groups: {
-        root:   {color:{background:"#E74C3C", border:"#C0392B", highlight:{background:"#f56254", border:"#C0392B"}}},
-        client: {color:{background:"#2ECC71", border:"#27AE60", highlight:{background:"#58d68d", border:"#27AE60"}}},
-        server: {color:{background:"#3498DB", border:"#2980B9", highlight:{background:"#5dade2", border:"#2980B9"}}},
-        ui:     {color:{background:"#9B59B6", border:"#8E44AD", highlight:{background:"#af7ac5", border:"#8E44AD"}}},
-        model:  {color:{background:"#F1C40F", border:"#D4AC0D", highlight:{background:"#f4d03f", border:"#D4AC0D"}}},
-        data:   {color:{background:"#E67E22", border:"#D35400", highlight:{background:"#eb984e", border:"#D35400"}}},
-        net:    {color:{background:"#1ABC9C", border:"#16A085", highlight:{background:"#48c9b0", border:"#16A085"}}},
-        util:   {color:{background:"#95A5A6", border:"#7F8C8D", highlight:{background:"#abb2b3", border:"#7F8C8D"}}},
-        external:{color:{background:"#3a3f4b", border:"#555b66", highlight:{background:"#4a505c", border:"#666c77"}}}
+        root:   {color:{background:"#E74C3C", border:"#C0392B", highlight:{background:"#f56254", border:"#C0392B"}}, font:{color:"#fff"}},
+        client: {color:{background:"#2ECC71", border:"#27AE60", highlight:{background:"#58d68d", border:"#27AE60"}}, font:{color:"#fff"}},
+        server: {color:{background:"#3498DB", border:"#2980B9", highlight:{background:"#5dade2", border:"#2980B9"}}, font:{color:"#fff"}},
+        ui:     {color:{background:"#9B59B6", border:"#8E44AD", highlight:{background:"#af7ac5", border:"#8E44AD"}}, font:{color:"#fff"}},
+        model:  {color:{background:"#F1C40F", border:"#C9A70B", highlight:{background:"#f4d03f", border:"#C9A70B"}}, font:{color:"#222"}},
+        data:   {color:{background:"#E67E22", border:"#D35400", highlight:{background:"#eb984e", border:"#D35400"}}, font:{color:"#fff"}},
+        net:    {color:{background:"#1ABC9C", border:"#16A085", highlight:{background:"#48c9b0", border:"#16A085"}}, font:{color:"#fff"}},
+        util:   {color:{background:"#95A5A6", border:"#7F8C8D", highlight:{background:"#abb2b3", border:"#7F8C8D"}}, font:{color:"#222"}},
+        external:{color:{background:"#3a3f4b", border:"#555b66", highlight:{background:"#4a505c", border:"#666c77"}}, font:{color:"#888"}}
     },
     nodes: {
         shapeProperties: {borderRadius: 4},
@@ -982,15 +981,14 @@ const network = new vis.Network(container, {nodes, edges}, {
         font: {align:"horizontal", size:9, color:"#7f848e", background:"rgba(26,29,35,.85)", strokeWidth:0}
     },
     physics: {
-        forceAtlas2Based: {
-            gravitationalConstant: -26,
-            centralGravity: 0.005,
-            springLength: 230,
-            springConstant: 0.18
+        barnesHut: {
+            gravitationalConstant: -2000,
+            centralGravity: 0.3,
+            springLength: 200,
+            springConstant: 0.04,
+            damping: 0.09
         },
-        maxVelocity: 50,
-        solver: "forceAtlas2Based",
-        stabilization: {iterations: 200}
+        stabilization: {iterations: 150}
     },
     interaction: {hover: true, zoomView: true, dragView: true, navigationButtons: false}
 });
@@ -1084,7 +1082,7 @@ const searchBox = document.getElementById("searchBox");
 searchBox.addEventListener("input", function() {
     const q = this.value.trim().toLowerCase();
     if (!q) {
-        nodes.forEach(n => nodes.update({id: n.id, opacity: 1, font: {size: (n.group==="external"?11:13)}}));
+        nodes.forEach(n => nodes.update({id: n.id, opacity: 1}));
         edges.forEach(e => edges.update({id: e.id, hidden: false}));
         return;
     }
@@ -1129,7 +1127,7 @@ function toggleSidebar() {
 function resetView() {
     network.fit({animation: true});
     searchBox.value = "";
-    nodes.forEach(n => nodes.update({id: n.id, opacity: 1, font:{size:(n.group==="external"?11:13)}}));
+    nodes.forEach(n => nodes.update({id: n.id, opacity: 1}));
     edges.forEach(e => edges.update({id: e.id, hidden: !!hiddenTypes[e._type]}));
 }
 
